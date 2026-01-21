@@ -1,5 +1,6 @@
 import Scene from "./Scene.js";
 import LinearSearchScene from "../games/LinearSearch/LinearSearchScene.js";
+import EightPuzzleScene from "../games/EightPuzzle/EightPuzzleScene.js";
 
 export default class MenuScene extends Scene {
   constructor(engine) {
@@ -7,6 +8,7 @@ export default class MenuScene extends Scene {
     this.options = [
       // Link each game when done, or during testing
       { title: "Linear Search", scene: LinearSearchScene },
+      { title: "8-Puzzle", scene: EightPuzzleScene },
       { title: "Binary Search (Locked)", scene: null },
       { title: "Bubble Sort (Locked)", scene: null },
     ];
@@ -56,13 +58,13 @@ export default class MenuScene extends Scene {
             }" id="menu-item-${i}">
                 ${opt.title}
             </div>
-        `
+        `,
       )
       .join("");
 
     // Ensures selected item is visible (scrolls if necessary)
     const selectedEl = document.getElementById(
-      `menu-item-${this.selectedIndex}`
+      `menu-item-${this.selectedIndex}`,
     );
     if (selectedEl) {
       selectedEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
