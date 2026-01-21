@@ -1,7 +1,7 @@
 /**
  * CRTFilter.js
- * A WebGL-based CRT shader.
- * Renders curved scanlines, vignette, and noise on top of the DOM.
+ * WebGL-based CRT shader with dynamic uniform updates.
+ * Adapted From https://github.com/Ichiaka/CRTFilter
  */
 export default class CRTFilter {
   constructor(containerId, config = {}) {
@@ -14,11 +14,12 @@ export default class CRTFilter {
     // Configuration
     this.config = Object.assign(
       {
-        curvature: 3.0,
+        curvature: 0.0,
         scanlineIntensity: 0.15,
         noiseOpacity: 0.1,
         vignetteOpacity: 0.9,
         chromaticAberration: 0.005,
+        resolutionScale: 0.5,
       },
       config,
     );
@@ -29,15 +30,13 @@ export default class CRTFilter {
     this.canvas.style.left = "0";
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
-    this.canvas.style.pointerEvents = "none"; // Click-through
+    this.canvas.style.imageRendering = "pixelated";
+    this.canvas.style.pointerEvents = "none";
     this.canvas.style.zIndex = "9999";
 
     this.container.appendChild(this.canvas);
 
-    if (!this.gl) {
-      console.error("WebGL not supported, CRT effect disabled.");
-      return;
-    }
+    if (!this.gl) return;
 
     this.startTime = performance.now();
     this.initWebGL();
@@ -122,6 +121,8 @@ export default class CRTFilter {
     this.positionLoc = gl.getAttribLocation(program, "position");
     this.uTimeLoc = gl.getUniformLocation(program, "uTime");
     this.uResLoc = gl.getUniformLocation(program, "uResolution");
+
+    // Save uniform locations for the loop
     this.uCurvatureLoc = gl.getUniformLocation(program, "uCurvature");
     this.uScanlineLoc = gl.getUniformLocation(program, "uScanlineIntensity");
     this.uNoiseLoc = gl.getUniformLocation(program, "uNoiseOpacity");
@@ -130,12 +131,6 @@ export default class CRTFilter {
 
     gl.enableVertexAttribArray(this.positionLoc);
     gl.vertexAttribPointer(this.positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.uniform1f(this.uCurvatureLoc, this.config.curvature);
-    gl.uniform1f(this.uScanlineLoc, this.config.scanlineIntensity);
-    gl.uniform1f(this.uNoiseLoc, this.config.noiseOpacity);
-    gl.uniform1f(this.uVignetteLoc, this.config.vignetteOpacity);
-    gl.uniform1f(this.uAberrationLoc, this.config.chromaticAberration);
   }
 
   createProgram(gl, vertCode, fragCode) {
@@ -158,16 +153,25 @@ export default class CRTFilter {
     if (!this.gl) return;
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.gl.viewport(0, 0, width, height);
-    this.gl.uniform2f(this.uResLoc, width, height);
+    this.canvas.width = width * this.config.resolutionScale;
+    this.canvas.height = height * this.config.resolutionScale;
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    this.gl.uniform2f(this.uResLoc, this.canvas.width, this.canvas.height);
   }
 
   loop() {
     if (!this.gl) return;
     const currentTime = (performance.now() - this.startTime) / 1000;
+
+    // --- DYNAMIC UPDATES ---
+    // We update these every frame to allow real-time changes from SettingsScene
     this.gl.uniform1f(this.uTimeLoc, currentTime);
+    this.gl.uniform1f(this.uCurvatureLoc, this.config.curvature);
+    this.gl.uniform1f(this.uScanlineLoc, this.config.scanlineIntensity);
+    this.gl.uniform1f(this.uNoiseLoc, this.config.noiseOpacity);
+    this.gl.uniform1f(this.uVignetteLoc, this.config.vignetteOpacity);
+    this.gl.uniform1f(this.uAberrationLoc, this.config.chromaticAberration);
+
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     requestAnimationFrame(() => this.loop());
   }

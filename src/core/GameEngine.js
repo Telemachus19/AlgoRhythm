@@ -3,14 +3,14 @@ import SceneManager from "./SceneManager.js";
 import MenuScene from "../scenes/MenuScene.js";
 
 export default class GameEngine {
-  constructor() {
+  constructor(crtFilter) {
     this.lastTime = 0;
     this.input = new InputHandler();
     this.sceneManager = new SceneManager(this);
+    this.crtFilter = crtFilter;
   }
 
   start() {
-    // Boot into Menu
     this.sceneManager.changeScene(MenuScene);
     this.lastTime = performance.now();
     requestAnimationFrame(this.loop.bind(this));

@@ -2,14 +2,11 @@ import GameEngine from "./core/GameEngine.js";
 import CRTFilter from "./core/CRTFilter.js";
 
 window.onload = () => {
-  // Init Visuals
-  // Curvature removed to improve performance and alignment
-  new CRTFilter("arcade-cabinet", {
+  const crt = new CRTFilter("arcade-cabinet", {
     curvature: 0.0,
-    vignetteOpacity: 0,
+    scanlineIntensity: 0.15,
+    resolutionScale: 0.5,
   });
-
-  // Init Logic
-  const engine = new GameEngine();
+  const engine = new GameEngine(crt);
   engine.start();
 };
