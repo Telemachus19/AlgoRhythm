@@ -7,8 +7,6 @@ export const COLORS = {
   white: "#ffffff",
   darkGray: "#333333",
 };
-
-// Font Definitions
 const FAMILIES = [
   "'VT323', monospace",
   "'Share Tech Mono', monospace",
@@ -32,8 +30,7 @@ export function cycleFont(direction) {
     (activeFontIndex + direction + FAMILIES.length) % FAMILIES.length;
   const family = FAMILIES[activeFontIndex];
 
-  // Update global font strings
-  FONTS.main = `30px ${family}`;
+  FONTS.main = `32px ${family}`;
   FONTS.header = `bold 64px ${family}`;
   FONTS.small = `24px ${family}`;
   FONTS.huge = `bold 100px ${family}`;
