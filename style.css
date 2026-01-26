@@ -1,149 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?&family=VT323&display=swap");
+@import url("https://fonts.googleapis.com/css2?&family=Share+Tech+Mono&display=swap");
+@import url("https://fonts.googleapis.com/css2?&family=Jersey+25display=swap");
+@import url("https://fonts.googleapis.com/css2?&family=Jersey+10&display=swap");
+
 :root {
-    --bg-color: #111;
-    --screen-bg: #0a0a0a;
-    --neon-green: #39ff14;
-    --neon-red: #ff003c;
-    --neon-blue: #00f3ff;
-    --text-shadow: 0 0 2px rgba(57, 255, 20, 0.5);
-    --font-main: 'Press Start 2P', 'Courier New', Courier, monospace;
+  --bg-color: #111;
+  --screen-bg: #0a0a0a;
+  --font-main: "VT323", monospace;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-color);
-    color: var(--neon-green);
-    font-family: var(--font-main);
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    user-select: none;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  font-family: var(--font-main);
 }
 
 #arcade-cabinet {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--screen-bg);
-    overflow: hidden;
-    z-index: 1;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--screen-bg);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-#scene-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-}
-
-/* UI Utilities */
-.center-flex {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-    text-align: center;
-}
-
-h1 {
-    font-size: 4rem;
-    text-shadow: 2px 2px 0px var(--neon-blue);
-    margin-bottom: 3rem;
-    text-transform: capitalize;
-    letter-spacing: 6px;
-}
-
-/* Menu Styles */
-#menu-list {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-height: 60vh;
-    overflow-y: auto;  
-    width: 100%;
-    scrollbar-width: none; 
-}
-
-#menu-list::-webkit-scrollbar { display: none; }
-
-.menu-item {
-    font-size: 2rem;
-    margin: 15px 0;
-    padding: 15px 30px;
-    border: 2px solid transparent;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: all 0.1s;
-    flex-shrink: 0; 
-}
-
-.menu-item.selected {
-    opacity: 1;
-    border-color: var(--neon-green);
-    background: rgba(57, 255, 20, 0.1);
-    text-shadow: 0 0 15px var(--neon-green);
-    transform: scale(1.1);
-}
-
-.menu-instructions {
-    margin-top: 60px;
-    font-size: 1rem;
-    opacity: 0.6;
-}
-
-/* --- SETTINGS SCENE STYLES --- */
-.settings-container {
-    width: 600px;
-    text-align: left;
-}
-
-.setting-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0;
-    padding: 10px 20px;
-    border: 1px solid transparent;
-    opacity: 0.7;
-}
-
-.setting-row.selected {
-    opacity: 1;
-    border: 1px solid var(--neon-blue);
-    background: rgba(0, 243, 255, 0.1);
-    text-shadow: 0 0 8px var(--neon-blue);
-}
-
-.setting-label {
-    font-size: 1.5rem;
-}
-
-.setting-control {
-    display: flex;
-    align-items: center;
-    font-size: 1.2rem;
-}
-
-.bar-container {
-    width: 200px;
-    height: 10px;
-    background: #333;
-    margin: 0 15px;
-    position: relative;
-}
-
-.bar-fill {
-    height: 100%;
-    background: var(--neon-green);
-    width: 0%; /* JS updates this */
-    transition: width 0.1s linear;
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  z-index: 1;
+  opacity: 0;
 }

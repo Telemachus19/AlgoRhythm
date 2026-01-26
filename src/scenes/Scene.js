@@ -1,16 +1,18 @@
 export default class Scene {
   constructor(engine) {
     this.engine = engine;
-    this.container = document.getElementById("scene-layer");
+  }
+
+  // Dynamic dimensions based on current canvas size
+  get width() {
+    return this.engine.canvas.width;
+  }
+  get height() {
+    return this.engine.canvas.height;
   }
 
   enter() {}
-
-  exit() {
-    this.container.innerHTML = "";
-  }
-
+  exit() {}
   update(dt) {}
-
-  render() {}
+  render(ctx) {}
 }

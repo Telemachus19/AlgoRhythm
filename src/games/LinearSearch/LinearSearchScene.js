@@ -1,48 +1,32 @@
 import Scene from "../../scenes/Scene.js";
 import MenuScene from "../../scenes/MenuScene.js";
+import { COLORS, FONTS } from "../../core/Constants.js";
 
-export default class LinearSearchScene extends Scene {
+export default class LinearLockScene extends Scene {
   constructor(engine) {
     super(engine);
     this.baseArraySize = 20;
     this.baseSpeed = 0.5;
     this.data = [];
-    this.boxes = [];
     this.targetValue = 0;
     this.targetIndex = 0;
     this.currentIndex = 0;
-    this.itemTotalWidth = 0;
     this.timer = 0;
     this.currentSpeed = 0;
     this.isPlaying = false;
     this.score = 0;
     this.level = 1;
     this.message = "";
-    this.stripEl = null;
+
+    this.boxSize = 60;
+    this.boxMargin = 10;
+    this.itemWidth = this.boxSize + this.boxMargin;
+    this.stripOffsetX = 0;
+    this.targetStripX = 0;
   }
 
   enter() {
-    this.setupDOM();
     this.startLevel();
-  }
-
-  setupDOM() {
-    this.container.innerHTML = `
-            <div class="game-hud">
-                <div>SCORE: <span id="score-el">0</span></div>
-                <div>LEVEL: <span id="level-el">1</span></div>
-            </div>
-            <div class="target-display">
-                FIND TARGET
-                <span id="target-el">?</span>
-            </div>
-            <div class="array-container">
-                <div class="scanner-reticle"></div>
-                <div class="array-strip" id="strip-el"></div>
-            </div>
-            <div class="message-overlay" id="msg-el"></div>
-        `;
-    this.stripEl = document.getElementById("strip-el");
   }
 
   startLevel() {
@@ -51,11 +35,6 @@ export default class LinearSearchScene extends Scene {
     this.currentSpeed = Math.max(0.1, this.baseSpeed - this.level * 0.04);
 
     this.data = [];
-    this.boxes = [];
-    this.stripEl.innerHTML = "";
-    this.stripEl.style.transition = "none";
-    this.stripEl.style.transform = "translateX(0px)";
-
     const usedNumbers = new Set();
     for (let i = 0; i < this.arraySize; i++) {
       let val;
@@ -63,40 +42,20 @@ export default class LinearSearchScene extends Scene {
         val = Math.floor(Math.random() * 990) + 10;
       } while (usedNumbers.has(val));
       usedNumbers.add(val);
-      this.data.push(val);
-
-      const box = document.createElement("div");
-      box.className = "data-box";
-      box.textContent = val;
-      this.stripEl.appendChild(box);
-      this.boxes.push(box);
-    }
-
-    if (this.boxes.length > 0) {
-      const firstBox = this.boxes[0];
-      const rect = firstBox.getBoundingClientRect();
-      const style = window.getComputedStyle(firstBox);
-      const margin =
-        parseFloat(style.marginLeft) + parseFloat(style.marginRight);
-      this.itemTotalWidth = rect.width + margin;
+      this.data.push({ value: val, state: "neutral" });
     }
 
     const minIndex = Math.floor(this.arraySize * 0.25);
     this.targetIndex =
       Math.floor(Math.random() * (this.arraySize - minIndex)) + minIndex;
-    this.targetValue = this.data[this.targetIndex];
+    this.targetValue = this.data[this.targetIndex].value;
 
     this.currentIndex = 0;
     this.timer = 0;
     this.isPlaying = true;
     this.message = "";
 
-    document.getElementById("target-el").innerText = this.targetValue;
-    document.getElementById("score-el").innerText = this.score;
-    document.getElementById("level-el").innerText = this.level;
-    document.getElementById("msg-el").style.display = "none";
-
-    this.updateStripVisuals(true);
+    this.updateStripTarget(true);
   }
 
   update(dt) {
@@ -122,8 +81,6 @@ export default class LinearSearchScene extends Scene {
     }
 
     this.timer += dt;
-
-    // Use WHILE loop to catch up if frame rate drops
     let stepped = false;
     while (this.timer >= this.currentSpeed) {
       this.timer -= this.currentSpeed;
@@ -132,69 +89,133 @@ export default class LinearSearchScene extends Scene {
 
       if (this.currentIndex > this.targetIndex) {
         this.fail("MISSED TARGET");
-        return; // Break immediately
+        return;
       } else if (this.currentIndex >= this.arraySize) {
         this.fail("OUT OF BOUNDS");
-        return; // Break immediately
+        return;
       }
     }
 
-    // Only update visuals once per frame, even if multiple logic steps happened
     if (stepped) {
-      this.updateStripVisuals(false);
+      this.updateStripTarget(false);
     }
+
+    const speed = 15 * dt;
+    this.stripOffsetX += (this.targetStripX - this.stripOffsetX) * speed;
   }
 
-  updateStripVisuals(isSnap = false) {
-    const halfWidth = this.itemTotalWidth / 2;
-    const offset = -(this.currentIndex * this.itemTotalWidth + halfWidth);
+  updateStripTarget(snap) {
+    const center = this.width / 2;
+    this.targetStripX =
+      center - this.currentIndex * this.itemWidth - this.boxSize / 2;
 
-    if (isSnap) {
-      this.stripEl.style.transition = "none";
-    } else {
-      const animTime = Math.min(0.2, this.currentSpeed * 0.6);
-      this.stripEl.style.transition = `transform ${animTime}s cubic-bezier(0.1, 0.9, 0.2, 1)`;
-    }
-
-    this.stripEl.style.transform = `translateX(${offset}px)`;
-
-    const prevBox = this.boxes[this.currentIndex - 1];
-    if (prevBox) prevBox.classList.remove("active");
-
-    const currentBox = this.boxes[this.currentIndex];
-    if (currentBox) currentBox.classList.add("active");
+    if (snap) this.stripOffsetX = this.targetStripX;
   }
 
   handleLockAttempt() {
     this.isPlaying = false;
-    const halfWidth = this.itemTotalWidth / 2;
-    const offset = -(this.currentIndex * this.itemTotalWidth + halfWidth);
-    this.stripEl.style.transition = "none";
-    this.stripEl.style.transform = `translateX(${offset}px)`;
+    this.stripOffsetX = this.targetStripX;
 
     if (this.currentIndex === this.targetIndex) {
-      this.boxes[this.currentIndex].classList.add("locked-correct");
+      this.data[this.currentIndex].state = "correct";
       this.score += 100 + this.level * 50;
       this.level++;
-      this.showMessage("MATCH FOUND!", "var(--neon-green)");
+      this.message = "MATCH FOUND!";
+      this.messageColor = COLORS.green;
     } else {
-      this.boxes[this.currentIndex].classList.add("locked-wrong");
-      if (this.boxes[this.targetIndex]) {
-        this.boxes[this.targetIndex].style.border = "2px dashed white";
-      }
+      this.data[this.currentIndex].state = "wrong";
+      if (this.data[this.targetIndex])
+        this.data[this.targetIndex].state = "missed";
       this.fail("WRONG INDEX");
     }
   }
 
   fail(reason) {
     this.isPlaying = false;
-    this.showMessage(`GAME OVER: ${reason}`, "var(--neon-red)");
+    this.message = `GAME OVER: ${reason}`;
+    this.messageColor = COLORS.red;
   }
 
-  showMessage(text, color) {
-    const msgEl = document.getElementById("msg-el");
-    msgEl.innerText = text + " [PRESS SPACE]";
-    msgEl.style.color = color;
-    msgEl.style.display = "block";
+  render(ctx) {
+    ctx.fillStyle = COLORS.white;
+    ctx.font = FONTS.main;
+    ctx.textAlign = "left";
+    ctx.fillText(`SCORE: ${this.score}`, 20, 40);
+    ctx.textAlign = "right";
+    ctx.fillText(`LEVEL: ${this.level}`, this.width - 20, 40);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = COLORS.blue;
+    ctx.font = FONTS.main;
+    ctx.fillText("FIND TARGET", this.width / 2, 100);
+    ctx.font = FONTS.huge;
+    ctx.fillText(this.targetValue, this.width / 2, 180);
+
+    const stripY = 300;
+
+    this.data.forEach((item, i) => {
+      const x = this.stripOffsetX + i * this.itemWidth;
+      if (x < -100 || x > this.width + 100) return;
+
+      ctx.fillStyle = "#222";
+      if (item.state === "correct") ctx.fillStyle = COLORS.green;
+      if (item.state === "wrong") ctx.fillStyle = COLORS.red;
+
+      ctx.fillRect(x, stripY, this.boxSize, this.boxSize);
+
+      ctx.strokeStyle = "#444";
+      if (i === this.currentIndex) {
+        ctx.strokeStyle = COLORS.green;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = COLORS.green;
+      } else if (item.state === "missed") {
+        ctx.strokeStyle = COLORS.white;
+        ctx.setLineDash([5, 5]);
+      } else {
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.strokeRect(x, stripY, this.boxSize, this.boxSize);
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle =
+        item.state === "correct" || item.state === "wrong" ? "#000" : "#888";
+      if (i === this.currentIndex) ctx.fillStyle = COLORS.green;
+
+      ctx.font = "24px 'Courier New'";
+      ctx.font = FONTS.small;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(item.value, x + this.boxSize / 2, stripY + this.boxSize / 2);
+    });
+
+    ctx.strokeStyle = COLORS.blue;
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = COLORS.blue;
+    const reticleSize = this.boxSize + 14;
+    ctx.strokeRect(
+      this.width / 2 - reticleSize / 2,
+      stripY - 7,
+      reticleSize,
+      reticleSize,
+    );
+    ctx.shadowBlur = 0;
+
+    if (this.message) {
+      ctx.fillStyle = this.messageColor || COLORS.white;
+      ctx.textAlign = "center";
+      ctx.font = FONTS.main;
+      ctx.fillText(this.message, this.width / 2, 450);
+
+      if (!this.isPlaying) {
+        ctx.fillStyle = COLORS.white;
+        ctx.font = FONTS.small;
+        ctx.fillText("[PRESS SPACE]", this.width / 2, 480);
+      }
+    }
   }
 }
